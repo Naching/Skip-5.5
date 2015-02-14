@@ -18,7 +18,6 @@ public class DriveBase extends Subsystem {
 
 	private CANTalon CANTalonFL, CANTalonRL, CANTalonFR, CANTalonRR;
 	private RobotDrive drive;
-	public boolean atAngle = false;
 
 	private static DriveBase instance;
 
@@ -112,8 +111,34 @@ public class DriveBase extends Subsystem {
 		updateSD();
 	}
 
+	public double PIDTurnToAngleInput(double angle, boolean clockWise) {
+		double correctedGyroAngle = (((CommandBase.imu.getYaw() % 360) + 360) % 360);
+		boolean wrapAround = ((clockWise == true && correctedGyroAngle < angle && angle
+				- correctedGyroAngle > 180) || (clockWise = true
+				&& correctedGyroAngle > angle
+				&& angle - correctedGyroAngle <= 180));
+		if (clockWise == true && wrapAround) {
+			angle = angle + 360;
+		}
+		if (clockWise == false && wrapAround) {
+			angle = angle - 360;
+		}
+		double pidInputValue = (angle - correctedGyroAngle) / 180;
+		return pidInputValue;
+	}
+	
+	public boolean shortestTurnDirection(double angle){
+		boolean turnClockWise = true;
+		double correctedGyroAngle = (((CommandBase.imu.getYaw() % 360) + 360) % 360);
+		if ((correctedGyroAngle >= angle && correctedGyroAngle - angle <= 180)
+				|| (correctedGyroAngle < angle && angle - correctedGyroAngle > 180)) {
+		turnClockWise = false;
+		}
+		return turnClockWise;
+	}
+	
 	// does not work for sure, needs testing once we get our hands on a robot
-	public void turnToAngle(double angle, double tolerance) {
+/*	public void turnToAngle(double angle, double tolerance) {
 		final int CW = 0;
 		final int CCW = 1;
 		int direction = CW;
@@ -171,7 +196,7 @@ public class DriveBase extends Subsystem {
 			}
 			break;
 		}
-	}
+	} */
 
 	// Refresh Smart Dashboard values
 	public void updateSD() {
